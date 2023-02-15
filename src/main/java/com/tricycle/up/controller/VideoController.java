@@ -1,12 +1,13 @@
 package com.tricycle.up.controller;
 
-import cn.hutool.core.lang.Singleton;
-import cn.hutool.http.server.HttpServerRequest;
 import com.tricycle.up.entity.Video;
-import com.tricycle.up.framework.Action;
 import com.tricycle.up.framework.Result;
-import com.tricycle.up.mapper.VideoMapper;
+import com.tricycle.up.service.VideoService;
+import com.tricycle.up.task.UploadTask;
+import com.tricycle.up.util.BiliUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -17,14 +18,25 @@ import java.util.List;
  * @description 文件功能
  */
 @Slf4j
-@Action("/video")
+@RestController
+@RequestMapping("/video")
 public class VideoController {
-    private VideoMapper videoMapper = Singleton.get(VideoMapper.class);
+    @Autowired
+    private VideoService videoService;
 
-    @Action("/getVideoList")
-    public Result getVideoList(HttpServerRequest request) {
-        String id = request.getParam("id");
-        List<Video> videoList = videoMapper.getVideoListByRecordeId(Integer.valueOf(id));
+    @GetMapping("/getVideoList")
+    public Result getVideoList(@RequestParam("id") Integer id) {
+        List<Video> videoList = videoService.getVideoListByRecordeId(id);
         return Result.getSucc(videoList);
+    }
+
+    @PostMapping("/uploadVideo")
+    public Result uploadVideo(@RequestParam("id") Integer id) {
+        Video video = videoService.getVideoById(id);
+        if (video == null) {
+            Result.getFail();
+        }
+        BiliUtil.uploadService.submit(new UploadTask(video));
+        return Result.getSucc();
     }
 }

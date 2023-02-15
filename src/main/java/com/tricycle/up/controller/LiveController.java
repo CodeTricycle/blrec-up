@@ -1,12 +1,10 @@
 package com.tricycle.up.controller;
 
-import cn.hutool.core.lang.Singleton;
-import cn.hutool.http.server.HttpServerRequest;
-import cn.hutool.json.JSONUtil;
 import com.tricycle.up.entity.Live;
-import com.tricycle.up.framework.Action;
 import com.tricycle.up.framework.Result;
-import com.tricycle.up.mapper.LiveMapper;
+import com.tricycle.up.service.LiveService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @author pzf
@@ -14,35 +12,32 @@ import com.tricycle.up.mapper.LiveMapper;
  * @date 2023/2/12 22:17
  * @description
  */
-@Action("/live")
+@RestController
+@RequestMapping("/live")
 public class LiveController {
-    private LiveMapper liveMapper = Singleton.get(LiveMapper.class);
+    @Autowired
+    private LiveService liveService;
 
-    @Action("/getLiveList")
+    @GetMapping("/getLiveList")
     public Result getLiveList() {
-        return Result.getSucc(liveMapper.getLiveList());
+        return Result.getSucc(liveService.list());
     }
 
-    @Action("/deleteById")
-    public Result deleteById(HttpServerRequest request) {
-        int id = Integer.valueOf(request.getParam("id"));
-        liveMapper.deleteById(id);
+    @GetMapping("/deleteById")
+    public Result deleteById(@RequestParam("id") Integer id) {
+        liveService.removeById(id);
         return Result.getSucc();
     }
 
-    @Action("/updateById")
-    public Result updateById(HttpServerRequest request) {
-        String body = request.getBody();
-        Live live = JSONUtil.toBean(body, Live.class);
-        liveMapper.updateById(live);
+    @PostMapping("/updateById")
+    public Result updateById(@RequestBody Live live) {
+        liveService.updateById(live);
         return Result.getSucc();
     }
 
-    @Action("/insert")
-    public Result insert(HttpServerRequest request) {
-        String body = request.getBody();
-        Live live = JSONUtil.toBean(body, Live.class);
-        liveMapper.insert(live);
+    @PostMapping("/insert")
+    public Result insert(@RequestBody Live live) {
+        liveService.save(live);
         return Result.getSucc();
     }
 }

@@ -4,10 +4,9 @@ import cn.hutool.core.lang.Singleton;
 import com.tricycle.up.entity.Live;
 import com.tricycle.up.entity.User;
 import com.tricycle.up.entity.Video;
-import com.tricycle.up.framework.Init;
-import com.tricycle.up.mapper.LiveMapper;
-import com.tricycle.up.mapper.UserMapper;
-import com.tricycle.up.mapper.VideoMapper;
+import com.tricycle.up.service.LiveService;
+import com.tricycle.up.service.UserService;
+import com.tricycle.up.service.VideoService;
 import com.tricycle.up.util.BiliUtil;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,19 +24,19 @@ public class UploadTask implements Runnable {
     private Video video;
     private Live live;
     private User user;
-    private VideoMapper videoMapper;
-    private LiveMapper liveMapper;
-    private UserMapper userMapper;
+    private VideoService videoService;
+    private LiveService liveService;
+    private UserService userService;
 
     public UploadTask(Video video) {
         this.video = video;
-        this.videoMapper = Singleton.get(VideoMapper.class);
-        this.liveMapper = Singleton.get(LiveMapper.class);
-        this.userMapper = Singleton.get(UserMapper.class);
+        this.videoService = Singleton.get(VideoService.class);
+        this.liveService = Singleton.get(LiveService.class);
+        this.userService = Singleton.get(UserService.class);
 
         this.video = video;
-        this.live = this.liveMapper.getLiveByRoomId(video.getRoomId());
-        this.user = this.userMapper.getUserByUserId(this.live.getUserId());
+        this.live = this.liveService.getLiveByRoomId(video.getRoomId());
+        this.user = this.userService.getUserByUserId(this.live.getUserId());
     }
 
     @Override
@@ -47,7 +46,7 @@ public class UploadTask implements Runnable {
             if (!file.exists() || Objects.isNull(this.user)) {
                 //文件不存在
                 this.video.setSuccess(-1);
-                videoMapper.updateById(this.video);
+                videoService.updateById(this.video);
                 return;
             }
             BiliUtil.preUpload(this.video, this.user);
@@ -55,7 +54,7 @@ public class UploadTask implements Runnable {
             if (this.video.getSuccess() == 1) {
                 log.info(file.getName() + "上传完成！");
             }
-            videoMapper.updateById(this.video);
+            videoService.updateById(this.video);
         } catch (Exception e) {
             e.printStackTrace();
             BiliUtil.uploadService.submit(this);

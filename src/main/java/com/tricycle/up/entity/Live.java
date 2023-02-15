@@ -1,9 +1,6 @@
 package com.tricycle.up.entity;
 
-import com.tricycle.up.framework.BaseEntity;
 import lombok.Data;
-
-import java.util.Date;
 
 /**
  * @author tricycle

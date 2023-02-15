@@ -1,6 +1,7 @@
 package com.tricycle.up.event;
 
 import cn.hutool.core.lang.Singleton;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 
@@ -29,6 +30,9 @@ public abstract class EventListener implements Listener {
 
     public static void execute(String event) {
         try {
+            if (StrUtil.isBlank(event)){
+                return;
+            }
             JSONObject object = JSONUtil.parseObj(event);
             String eventType = object.getStr("type");
 

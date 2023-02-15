@@ -1,5 +1,8 @@
 package com.tricycle.up.config;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Configuration;
+
 import java.io.File;
 
 /**
@@ -8,11 +11,15 @@ import java.io.File;
  * @date 2023/2/7 9:04
  * @description
  */
+@Configuration
+@Slf4j
 public class Config {
-    public static String PATH = System.getProperty("user.dir") + File.separator;//录制目录 "/rec/"
+    public static String DB_PATH = "rec" + File.separator + "bili.db";//数据库路径
 
     public static String APP_KEY = "4409e2ce8ffd12b8";
     public static String APP_SEC = "59b43e04ad6965f34319062b478f83dd";
 
     public static int CHUNK_SIZE = 10 * 1024 * 1024;//10m
+
 }
+

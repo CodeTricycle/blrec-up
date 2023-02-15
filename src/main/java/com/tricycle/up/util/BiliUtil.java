@@ -128,10 +128,7 @@ public class BiliUtil {
                         URLUtil.buildQuery(params, CharsetUtil.parse(CharsetUtil.UTF_8)))
                 .cookie("sid=" + user.getSid());
 
-        System.out.println(preUploadRequest);
-        JSONObject preUpload = HttpUtil.execute(preUploadRequest, 3);
-        System.out.println(preUpload);
-
+        JSONObject preUpload = HttpUtil.execute(preUploadRequest, 1);
         if (preUpload.getInt("OK") == 1) {
             url = preUpload.getStr("url");
             filename = preUpload.getStr("filename");
@@ -150,53 +147,72 @@ public class BiliUtil {
      * @throws IOException
      */
     public static void uploadFile(File file, Video video) throws IOException {
-        String filename = file.getName();
-        String serverFilename = video.getFilename();
-        String url = video.getUrl();
-        int chunks = new BigDecimal(file.length()).divide(BigDecimal.valueOf(Config.CHUNK_SIZE)).setScale(0, BigDecimal.ROUND_UP).intValue();//切片
-        long total = file.length();
+        try {
+            String filename = file.getName();
+            String serverFilename = video.getFilename();
+            String url = video.getUrl();
+            int chunks = new BigDecimal(file.length()).divide(BigDecimal.valueOf(Config.CHUNK_SIZE)).setScale(0, BigDecimal.ROUND_UP).intValue();//切片
+            long total = file.length();
 
-        RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
-        String md5Hex = "";
-        int successChunk = 0;
-        byte[] buffer = new byte[Config.CHUNK_SIZE];
-        int end = 0;
-        for (int chunk = 0; chunk < chunks; chunk++) {
-            if (end + buffer.length > file.length()) {
-                buffer = new byte[(int) (file.length() - end)];
-            }
-            randomAccessFile.read(buffer);
-            HttpRequest uploadRequest = HttpRequest.post(url)
-                    .cookie("PHPSESSID=" + serverFilename)
-                    .contentType("multipart/form-data")
-                    .form("version", "2.3.0.1088")
-                    .form("filesize", buffer.length)
-                    .form("chunk", chunk)
-                    .form("chunks", chunks)
-                    .form("md5", DigestUtil.md5Hex(buffer))
-                    .form("file", buffer, "file");
-            JSONObject uploadObject = HttpUtil.execute(uploadRequest, 5);
+            RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
+            String md5Hex = "";
+            int successChunk = 0;
+            byte[] buffer = new byte[Config.CHUNK_SIZE];
+            int end = 0;
+            log.info("开始上传,filename:{},url:{},total:{},chunks:{}", filename, url, total, chunks);
+            for (int chunk = 0; chunk < chunks; chunk++) {
+                log.info("开始上传,filename:{},url:{},total:{},chunks:{},end:{}", filename, url, total, chunks, end);
+                try {
+                    if (end + buffer.length > file.length()) {
+                        buffer = new byte[(int) (file.length() - end)];
+                    }
+                    randomAccessFile.read(buffer);
+                    HttpRequest uploadRequest = HttpRequest.post(url)
+                            .cookie("PHPSESSID=" + serverFilename)
+                            .contentType("multipart/form-data")
+                            .form("version", "2.3.0.1088")
+                            .form("filesize", buffer.length)
+                            .form("chunk", chunk)
+                            .form("chunks", chunks)
+                            .form("md5", DigestUtil.md5Hex(buffer))
+                            .form("file", buffer, "file");
+                    System.out.println(uploadRequest);
 
-            end += Config.CHUNK_SIZE;
-            if (uploadObject.getInt("OK") == 1) {
-                md5Hex = DigestUtil.md5Hex(md5Hex + buffer);
-                log.info("{}上传成功，进度：{}/{}", filename, (chunk + 1), chunks);
-                successChunk++;
+                    JSONObject uploadObject = HttpUtil.execute(uploadRequest, 5);
+                    System.out.println(uploadObject);
+
+                    end += Config.CHUNK_SIZE;
+                    if (uploadObject.getInt("OK") == 1) {
+                        md5Hex = DigestUtil.md5Hex(md5Hex + buffer);
+                        log.info("{}上传中，进度：{}/{}", filename, (chunk + 1), chunks);
+                        successChunk++;
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-        }
-        if (successChunk == chunks) {
-            //上传完成
-            HttpRequest complete = HttpRequest.post(video.getComplete())
-                    .form("chunks", chunks)
-                    .form("filesize", total)
-                    .form("md5", md5Hex)
-                    .form("name", filename)
-                    .form("version", "2.3.0.1088");
-            String completeBody = complete.execute().body();
-            JSONObject completeObj = JSONUtil.parseObj(completeBody);
-            if (completeObj.getInt("OK") == 1) {
-                video.setSuccess(1);
+
+            System.out.println("结束上传---------");
+
+            if (successChunk == chunks) {
+                //上传完成
+                HttpRequest complete = HttpRequest.post(video.getComplete())
+                        .form("chunks", chunks)
+                        .form("filesize", total)
+                        .form("md5", md5Hex)
+                        .form("name", filename)
+                        .form("version", "2.3.0.1088");
+                String completeBody = complete.execute().body();
+                JSONObject completeObj = JSONUtil.parseObj(completeBody);
+                System.out.println(completeObj);
+                if (completeObj.getInt("OK") == 1) {
+                    video.setSuccess(1);
+                }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
         }
     }
 
@@ -225,10 +241,10 @@ public class BiliUtil {
 
         JSONObject body = new JSONObject();
 
-        if (live.isCopyright()){
+        if (live.isCopyright()) {
             //自制
             body.set("desc", desc);
-        }else{
+        } else {
             body.set("source", desc);
         }
 

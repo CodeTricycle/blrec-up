@@ -1,13 +1,13 @@
 package com.tricycle.up.event;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.lang.Singleton;
 import cn.hutool.json.JSONObject;
 import com.tricycle.up.entity.Video;
-import com.tricycle.up.mapper.VideoMapper;
+import com.tricycle.up.service.VideoService;
 import com.tricycle.up.task.UploadTask;
 import com.tricycle.up.util.BiliUtil;
 import com.tricycle.up.util.EventUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 import java.util.Objects;
@@ -19,18 +19,20 @@ import java.util.Objects;
  * @description
  */
 public class VideoPostprocessingCompletedEventListener extends EventListener {
-    private VideoMapper videoMapper = Singleton.get(VideoMapper.class);
+    @Autowired
+    private VideoService videoService;
 
     @Override
     public void execute(JSONObject object) throws Exception {
         Video videoEvent = EventUtil.toVideoEvent(object);
-        Video video = videoMapper.getVideoByPath(videoEvent.getPath());
+        Video video = videoService.getVideoByPath(videoEvent.getPath());
         if (Objects.isNull(video))
             return;
 
-        BeanUtil.copyProperties(videoEvent, video,"fileOpenTime");
+        BeanUtil.copyProperties(videoEvent, video,"recordeId","id","fileOpenTime");
+        System.out.println(video);
         video.setFileCloseTime(new Date());
-        videoMapper.updateById(video);
+        videoService.updateById(video);
 
         BiliUtil.uploadService.submit(new UploadTask(video));
     }

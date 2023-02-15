@@ -1,10 +1,10 @@
 package com.tricycle.up.event;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.lang.Singleton;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONObject;
 import com.tricycle.up.entity.Live;
-import com.tricycle.up.mapper.LiveMapper;
+import com.tricycle.up.service.LiveService;
 import com.tricycle.up.util.EventUtil;
 
 import java.util.Objects;
@@ -16,23 +16,23 @@ import java.util.Objects;
  * @description 开播事件
  */
 public class LiveEventListener extends EventListener {
-    private LiveMapper liveMapper = Singleton.get(LiveMapper.class);
+    private LiveService liveService = SpringUtil.getBean(LiveService.class);
 
     @Override
     public void execute(JSONObject object) throws Exception {
         Live liveEvent = EventUtil.toLiveEvent(object);
 
-        Live live = liveMapper.getLiveByRoomId(liveEvent.getRoomId());
+        Live live = liveService.getLiveByRoomId(liveEvent.getRoomId());
         if (Objects.isNull(live)) {
             //新建直播间
             live = new Live();
             BeanUtil.copyProperties(liveEvent, live);
-            liveMapper.insert(live);
+            liveService.save(live);
             return;
         }
         //修改直播间信息
         live.setCover(liveEvent.getCover());
         live.setTitle(liveEvent.getTitle());
-        liveMapper.updateById(live);
+        liveService.updateById(live);
     }
 }

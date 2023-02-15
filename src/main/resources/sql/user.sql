@@ -1,4 +1,4 @@
-CREATE TABLE "user" (
+CREATE TABLE IF NOT EXISTS "user" (
   "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
   "create_time" DATE,
   "update_time" DATE,

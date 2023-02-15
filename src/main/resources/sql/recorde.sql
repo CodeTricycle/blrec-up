@@ -1,4 +1,4 @@
-CREATE TABLE "recorde" (
+CREATE TABLE IF NOT EXISTS "recorde" (
   "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
   "create_time" DATE,
   "update_time" DATE,
