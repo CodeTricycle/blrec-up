@@ -2,7 +2,6 @@ package com.tricycle.up.task;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.resource.ClassPathResource;
-import cn.hutool.core.lang.Singleton;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.tricycle.up.config.Config;
@@ -14,6 +13,7 @@ import com.tricycle.up.util.BiliUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -32,6 +32,8 @@ public class InitTask {
 
     @Autowired
     private RecordeService recordeService;
+    @Autowired
+    private VideoService videoService;
 
     static {
         //创建数据库文件
@@ -47,6 +49,7 @@ public class InitTask {
         this.initTable("video");
 
         this.upload();
+        this.release();
     }
 
     /**
@@ -72,19 +75,19 @@ public class InitTask {
         jdbcTemplate.execute(sql);
     }
 
+    //@Scheduled(cron = "0 */1 * * * ?")
     public void upload() {
-        log.info("触发初始化任务-上传文件");
-        VideoService videoService = SpringUtil.getBean(VideoService.class);
+        log.info("触发任务-上传文件");
         List<Video> videoList = videoService.getNotUploadList();
         videoList.forEach(video -> {
             BiliUtil.uploadService.submit(new UploadTask(video));
         });
     }
 
+    @Scheduled(cron = "0 */10 * * * ?")
     public void release() {
-        log.info("触发定时任务-发布投稿");
+        log.info("触发任务-发布投稿");
         List<Recorde> releaseList = recordeService.getNotReleaseList();
-        System.out.println(releaseList);
         releaseList.forEach(recorde -> {
             new ReleaseTask(recorde).run();
             ThreadUtil.sleep(35 * 1000);//间隔35秒

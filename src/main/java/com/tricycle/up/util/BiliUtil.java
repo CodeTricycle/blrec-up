@@ -23,11 +23,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -39,7 +36,15 @@ import java.util.stream.Collectors;
 @Slf4j
 public class BiliUtil {
 
-    public static ExecutorService uploadService = Executors.newFixedThreadPool(1);
+    public static ExecutorService uploadService;
+    public static BlockingQueue<Runnable> uploadQueue;
+
+    static {
+        uploadQueue = new LinkedBlockingQueue<>();
+        uploadService = new ThreadPoolExecutor(1, 1,
+                0L, TimeUnit.MILLISECONDS,
+                uploadQueue);
+    }
 
     public static Map<String, Object> sign(Map<String, Object> params) {
         params.put("appkey", Config.APP_KEY);
@@ -147,6 +152,7 @@ public class BiliUtil {
      * @throws IOException
      */
     public static void uploadFile(File file, Video video) throws IOException {
+        RandomAccessFile randomAccessFile = null;
         try {
             String filename = file.getName();
             String serverFilename = video.getFilename();
@@ -154,19 +160,18 @@ public class BiliUtil {
             int chunks = new BigDecimal(file.length()).divide(BigDecimal.valueOf(Config.CHUNK_SIZE)).setScale(0, BigDecimal.ROUND_UP).intValue();//切片
             long total = file.length();
 
-            RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
+            randomAccessFile = new RandomAccessFile(file, "r");
             String md5Hex = "";
             int successChunk = 0;
             byte[] buffer = new byte[Config.CHUNK_SIZE];
             int end = 0;
-            log.info("开始上传,filename:{},url:{},total:{},chunks:{}", filename, url, total, chunks);
             for (int chunk = 0; chunk < chunks; chunk++) {
-                log.info("开始上传,filename:{},url:{},total:{},chunks:{},end:{}", filename, url, total, chunks, end);
                 try {
                     if (end + buffer.length > file.length()) {
                         buffer = new byte[(int) (file.length() - end)];
                     }
                     randomAccessFile.read(buffer);
+                    log.info("{}上传中，进度：{}/{}", filename, (chunk + 1), chunks);
                     HttpRequest uploadRequest = HttpRequest.post(url)
                             .cookie("PHPSESSID=" + serverFilename)
                             .contentType("multipart/form-data")
@@ -176,15 +181,11 @@ public class BiliUtil {
                             .form("chunks", chunks)
                             .form("md5", DigestUtil.md5Hex(buffer))
                             .form("file", buffer, "file");
-                    System.out.println(uploadRequest);
 
-                    JSONObject uploadObject = HttpUtil.execute(uploadRequest, 5);
-                    System.out.println(uploadObject);
-
+                    JSONObject uploadObject = HttpUtil.execute(uploadRequest, 10);
                     end += Config.CHUNK_SIZE;
                     if (uploadObject.getInt("OK") == 1) {
                         md5Hex = DigestUtil.md5Hex(md5Hex + buffer);
-                        log.info("{}上传中，进度：{}/{}", filename, (chunk + 1), chunks);
                         successChunk++;
                     }
 
@@ -192,8 +193,7 @@ public class BiliUtil {
                     e.printStackTrace();
                 }
             }
-
-            System.out.println("结束上传---------");
+            randomAccessFile.close();
 
             if (successChunk == chunks) {
                 //上传完成
@@ -205,7 +205,6 @@ public class BiliUtil {
                         .form("version", "2.3.0.1088");
                 String completeBody = complete.execute().body();
                 JSONObject completeObj = JSONUtil.parseObj(completeBody);
-                System.out.println(completeObj);
                 if (completeObj.getInt("OK") == 1) {
                     video.setSuccess(1);
                 }
@@ -213,6 +212,10 @@ public class BiliUtil {
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
+        } finally {
+            if (Objects.nonNull(randomAccessFile)) {
+                randomAccessFile.close();
+            }
         }
     }
 
@@ -225,7 +228,7 @@ public class BiliUtil {
                         URLUtil.buildQuery(addParams, CharsetUtil.parse("UTF-8")))
                 .form("file", new File(imgPath));
 
-        JSONObject coverObject = HttpUtil.execute(coverRequest, 3);
+        JSONObject coverObject = HttpUtil.execute(coverRequest, 5);
         String url = coverObject.getJSONObject("data").getStr("url");
         return url;
     }
@@ -241,7 +244,7 @@ public class BiliUtil {
 
         JSONObject body = new JSONObject();
 
-        if (live.isCopyright()) {
+        if (live.getCopyright()) {
             //自制
             body.set("desc", desc);
         } else {
@@ -250,7 +253,7 @@ public class BiliUtil {
 
         body.set("cover", imgUrl);
         body.set("title", title);
-        body.set("copyright", live.isCopyright() ? 1 : 2);
+        body.set("copyright", live.getCopyright() ? 1 : 2);
         body.set("tag", live.getTags());
         body.set("recreate", -1);
         body.set("tid", live.getTid());
@@ -272,7 +275,8 @@ public class BiliUtil {
 
         String releaseResponse = request.execute().body();
         JSONObject releaseObj = JSONUtil.parseObj(releaseResponse);
-        if (releaseObj.getInt("code") == 0) {
+        Integer code = releaseObj.getInt("code");
+        if (code == 0 || code == 21503) {
             log.info("发布成功");
             return true;
         }
@@ -301,7 +305,13 @@ public class BiliUtil {
 
         DateTime dateTime = DateTime.of(video.getFileOpenTime());
 
-        return content.replace("${uname}", live.getName())
+        if (Objects.nonNull(live.getName())) {
+            content = content.replace("${uname}", live.getName());
+        } else {
+            content = content.replace("${uname}", "直播回放");
+        }
+
+        return content
                 .replace("${roomId}", String.valueOf(live.getRoomId()))
                 .replace("${title}", live.getTitle())
                 .replace("yyyy", String.valueOf(dateTime.getField(DateField.YEAR)))

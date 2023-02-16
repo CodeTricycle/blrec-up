@@ -1,6 +1,8 @@
 package com.tricycle.up.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
 
@@ -12,11 +14,15 @@ import java.util.Date;
  */
 @Data
 public class Recorde extends BaseEntity {
-    private long roomId;//直播间
+    private Long roomId;//直播间
+    @DateTimeFormat(pattern ="yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date liveStartTime;//开播时间
+    @DateTimeFormat(pattern ="yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date liveStopTime;//关播时间
     private String title;//标题
     private String cover;//封面
 
-    private boolean success = false;//已发布
+    private Boolean success;//已发布
 }

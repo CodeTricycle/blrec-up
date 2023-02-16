@@ -1,6 +1,7 @@
 package com.tricycle.up.task;
 
 import cn.hutool.core.lang.Singleton;
+import cn.hutool.extra.spring.SpringUtil;
 import com.tricycle.up.entity.Live;
 import com.tricycle.up.entity.User;
 import com.tricycle.up.entity.Video;
@@ -30,9 +31,9 @@ public class UploadTask implements Runnable {
 
     public UploadTask(Video video) {
         this.video = video;
-        this.videoService = Singleton.get(VideoService.class);
-        this.liveService = Singleton.get(LiveService.class);
-        this.userService = Singleton.get(UserService.class);
+        this.videoService = SpringUtil.getBean(VideoService.class);
+        this.liveService = SpringUtil.getBean(LiveService.class);
+        this.userService = SpringUtil.getBean(UserService.class);
 
         this.video = video;
         this.live = this.liveService.getLiveByRoomId(video.getRoomId());

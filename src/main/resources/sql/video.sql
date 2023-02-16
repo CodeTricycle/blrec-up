@@ -1,7 +1,5 @@
 CREATE TABLE IF NOT EXISTS "video" (
   "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-  "create_time" DATE,
-  "update_time" DATE,
   "recorde_id" INTEGER,
   "room_id" INTEGER,
   "path" TEXT,

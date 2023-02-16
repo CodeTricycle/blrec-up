@@ -1,7 +1,5 @@
 CREATE TABLE IF NOT EXISTS "user" (
   "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-  "create_time" DATE,
-  "update_time" DATE,
   "mid" text,
   "access_token" TEXT,
   "refresh_token" TEXT,

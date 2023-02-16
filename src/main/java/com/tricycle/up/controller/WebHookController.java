@@ -23,10 +23,8 @@ public class WebHookController {
     @RequestMapping("/webHook")
     public Result webHook(@RequestBody(required = false) String json) {
         if (StrUtil.isNotBlank(json)) {
-            ThreadUtil.execute(() -> {
-                log.info("接收到webHook消息：{}", json);
-                EventListener.execute(json);
-            });
+            log.info("接收到webHook消息：{}", json);
+            EventListener.execute(json);
         }
         return Result.getSucc();
     }

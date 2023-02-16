@@ -22,6 +22,7 @@ public abstract class EventListener implements Listener {
         listenerMap.put("LiveBeganEvent", Singleton.get(LiveEventListener.class));//开播
         listenerMap.put("LiveEndedEvent", Singleton.get(LiveEventListener.class));//关播
         listenerMap.put("VideoFileCreatedEvent", Singleton.get(VideoFileCreatedEventListener.class));//视频文件创建
+        listenerMap.put("VideoFileCompletedEvent", Singleton.get(VideoFileCompletedEventListener.class));//视频文件结束
         listenerMap.put("VideoPostprocessingCompletedEvent", Singleton.get(VideoPostprocessingCompletedEventListener.class));//视频文件后处理完成
         listenerMap.put("RecordingStartedEvent", Singleton.get(RecordingStartedEventListener.class));//录制开始
         listenerMap.put("RecordingFinishedEvent", Singleton.get(RecordingFinishedEventListener.class));//录制完成

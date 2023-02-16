@@ -11,6 +11,5 @@ import com.tricycle.up.entity.Recorde;
  * @description
  */
 public interface LiveService extends IService<Live> {
-    //select * from live where room_id = ?
     Live getLiveByRoomId(long roomId);
 }

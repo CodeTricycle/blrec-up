@@ -1,11 +1,12 @@
 package com.tricycle.up.event;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONObject;
 import com.tricycle.up.entity.Live;
 import com.tricycle.up.service.LiveService;
+import com.tricycle.up.util.BeanUtil;
 import com.tricycle.up.util.EventUtil;
+import org.springframework.beans.BeanUtils;
 
 import java.util.Objects;
 
@@ -26,7 +27,7 @@ public class LiveEventListener extends EventListener {
         if (Objects.isNull(live)) {
             //新建直播间
             live = new Live();
-            BeanUtil.copyProperties(liveEvent, live);
+            BeanUtils.copyProperties(liveEvent, live, BeanUtil.getNullPropertyNames(liveEvent));
             liveService.save(live);
             return;
         }

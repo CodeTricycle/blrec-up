@@ -33,7 +33,9 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     @Override
     public Video getLastVideoByRoomId(long roomId) {
         LambdaQueryWrapper<Video> wrapper = Wrappers.lambdaQuery();
-        wrapper.eq(Video::getRoomId, roomId);
+        wrapper.eq(Video::getRoomId, roomId)
+                .orderByDesc(Video::getId)
+                .last("limit 1");
 
         return this.getOne(wrapper);
     }
@@ -42,7 +44,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     public List<Video> getNotUploadList() {
         LambdaQueryWrapper<Video> wrapper = Wrappers.lambdaQuery();
         wrapper.eq(Video::getSuccess, 0)//未上传
-                .ge(Video::getFileCloseTime, DateUtil.date());//大于当前时间
+                .le(Video::getFileCloseTime, DateUtil.date());//大于当前时间
 
         return this.baseMapper.selectList(wrapper);
     }
@@ -52,7 +54,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         LambdaQueryWrapper<Video> wrapper = Wrappers.lambdaQuery();
         wrapper.eq(Video::getSuccess, 0)
                 .eq(Video::getRecordeId, recordeId)
-                .ge(Video::getFileCloseTime, DateUtil.date());//大于当前时间
+                .le(Video::getFileCloseTime, DateUtil.date());//大于当前时间
 
         return this.baseMapper.selectCount(wrapper);
     }
@@ -66,12 +68,12 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     }
 
     @Override
-    public List<Video> getVideoListByRecordeIdAndSuccess(int id) {
+    public Long getVideoListByRecordeIdAndSuccess(int id) {
         LambdaQueryWrapper<Video> wrapper = Wrappers.lambdaQuery();
         wrapper.eq(Video::getRecordeId, id);
         wrapper.eq(Video::getSuccess, true);
 
-        return this.list(wrapper);
+        return this.count(wrapper);
     }
 
     @Override

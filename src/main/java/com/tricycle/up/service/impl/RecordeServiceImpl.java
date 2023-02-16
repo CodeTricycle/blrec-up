@@ -35,30 +35,29 @@ public class RecordeServiceImpl extends ServiceImpl<RecordeMapper, Recorde> impl
     private VideoService videoService;
 
     @Override
-    public Recorde getLastByRoomId(long roomId) {
+    public Recorde getLastRecordeByRoomId(long roomId) {
         LambdaQueryWrapper<Recorde> wrapper = Wrappers.lambdaQuery();
-        wrapper.eq(Recorde::getRoomId, roomId);
+        wrapper.eq(Recorde::getRoomId, roomId)
+                .orderByDesc(Recorde::getId)
+                .last("limit 1");
         return this.getOne(wrapper);
     }
 
     @Override
     public List<Recorde> getNotReleaseList() {
+        DateTime currentDate = DateUtil.offsetMinute(DateUtil.date(), -10);//十分钟前
+
         LambdaQueryWrapper<Recorde> wrapper = Wrappers.lambdaQuery();
-        wrapper.eq(Recorde::isSuccess, false);
+        wrapper.eq(Recorde::getSuccess, false)
+                .isNotNull(Recorde::getLiveStopTime)//视频文件已结束
+                .le(Recorde::getLiveStopTime, currentDate);//视频结束时间超过十分钟
         List<Recorde> recordeNotList = this.baseMapper.selectList(wrapper);
 
-        DateTime currentDate = DateUtil.offsetMinute(DateUtil.date(), -10);//当前时间
-
         List<Recorde> recordeList = recordeNotList.stream().filter(recorde -> {
-            if (recorde.getLiveStopTime() != null) {
-                //视频文件已结束
-                if (currentDate.after(recorde.getLiveStopTime())) {
-                    //视频结束时间超过十分钟
-                    //判断文件是否全部上传完成
-                    Long count = videoService.getNotUploadList(recorde.getId());
-                    if (count.equals(0))
-                        return true;
-                }
+            //判断文件是否全部上传完成
+            Long count = videoService.getNotUploadList(recorde.getId());
+            if (count == 0L) {
+                return true;
             }
             return false;
         }).collect(Collectors.toList());

@@ -1,13 +1,12 @@
 package com.tricycle.up.event;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.lang.Singleton;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONObject;
 import com.tricycle.up.entity.Recorde;
-import com.tricycle.up.mapper.RecordeMapper;
 import com.tricycle.up.service.RecordeService;
+import com.tricycle.up.util.BeanUtil;
 import com.tricycle.up.util.EventUtil;
+import org.springframework.beans.BeanUtils;
 
 import java.util.Date;
 import java.util.Objects;
@@ -25,11 +24,12 @@ public class RecordingFinishedEventListener extends EventListener {
     @Override
     public void execute(JSONObject object) throws Exception {
         Recorde recordeEvent = EventUtil.toRecordeEvent(object);
-        Recorde recorde = recordeService.getLastByRoomId(recordeEvent.getRoomId());
+        EventUtil.removeLock(recordeEvent.getRoomId());
+        Recorde recorde = recordeService.getLastRecordeByRoomId(recordeEvent.getRoomId());
         if (Objects.isNull(recorde)) {
             return;
         }
-        BeanUtil.copyProperties(recordeEvent, recorde, "id", "liveStartTime");
+        BeanUtils.copyProperties(recordeEvent, recorde, BeanUtil.getNullPropertyNames(recordeEvent));
         recorde.setLiveStopTime(new Date());
         recordeService.updateById(recorde);
     }

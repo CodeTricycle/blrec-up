@@ -1,7 +1,5 @@
 CREATE TABLE IF NOT EXISTS "live" (
   "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-  "create_time" DATE,
-  "update_time" DATE,
   "name" TEXT,
   "room_id" INTEGER,
   "title" TEXT,

@@ -6,7 +6,11 @@ import com.tricycle.up.entity.Live;
 import com.tricycle.up.entity.Recorde;
 import com.tricycle.up.entity.Video;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author pzf
@@ -15,6 +19,50 @@ import java.util.Objects;
  * @description
  */
 public class EventUtil {
+
+    private static Map<Long, Lock> lockMap = new HashMap<>();//用于管理房间录制文件顺序的问题
+
+    /**
+     * 新建锁，开始录制的时候调用
+     * @param roomId
+     */
+    public static void addLock(Long roomId) {
+        Lock lock = new ReentrantLock(true);//公平锁
+        lockMap.put(roomId, lock);
+    }
+
+    /**
+     * 上锁，文件完成、文件新建调用
+     * @param roomId
+     */
+    public static void lock(Long roomId) {
+        Lock lock = lockMap.get(roomId);
+        if (Objects.isNull(lock)){
+            lock = new ReentrantLock(true);//公平锁
+            lockMap.put(roomId, lock);
+        }
+        lock.lock();//上锁
+    }
+
+    /**
+     * 解锁，文件完成、文件新建调用
+     * @param roomId
+     */
+    public static void unlock(Long roomId) {
+        Lock lock = lockMap.get(roomId);
+        if (Objects.isNull(lock)) {
+            return;
+        }
+        lock.unlock();//解锁
+    }
+
+    /**
+     * 移除锁，停止录制的时候调用
+     * @param roomId
+     */
+    public static void removeLock(Long roomId) {
+        lockMap.remove(roomId);
+    }
 
     /**
      * 把事件转换为事件对象
@@ -59,7 +107,7 @@ public class EventUtil {
         JSONObject data = object.getJSONObject("data");
         Video video = new Video();
         video.setPath(data.getStr("path"));
-        video.setRoomId(data.getInt("room_id"));
+        video.setRoomId(data.getLong("room_id"));
 
         return video;
     }

@@ -1,6 +1,9 @@
 package com.tricycle.up.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
 
@@ -12,11 +15,15 @@ import java.util.Date;
  */
 @Data
 public class Video extends BaseEntity {
-    private int recordeId;//录制事件id
-    private long roomId;
+    private Integer recordeId;//录制事件id
+    private Long roomId;
     private String path;//文件路径
-    private int pIndex = 1;//第几分p
+    private Integer pIndex;//第几分p
+    @DateTimeFormat(pattern ="yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date fileOpenTime;
+    @DateTimeFormat(pattern ="yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date fileCloseTime;
 
     //step 1
@@ -25,5 +32,5 @@ public class Video extends BaseEntity {
     private String complete;
 
     //step 2
-    private Integer success = 0;//0未上传 1已上传 -1出错
+    private Integer success;//0未上传 1已上传 -1出错
 }

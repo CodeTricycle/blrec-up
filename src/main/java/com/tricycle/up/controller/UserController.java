@@ -1,6 +1,5 @@
 package com.tricycle.up.controller;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.qrcode.QrCodeUtil;
@@ -8,8 +7,10 @@ import com.tricycle.up.entity.QRCode;
 import com.tricycle.up.entity.User;
 import com.tricycle.up.framework.Result;
 import com.tricycle.up.service.UserService;
+import com.tricycle.up.util.BeanUtil;
 import com.tricycle.up.util.BiliUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -55,7 +56,7 @@ public class UserController {
                     if (Objects.isNull(user)) {
                         userService.save(loginUser);
                     } else {
-                        BeanUtil.copyProperties(loginUser, user, "id", "create_time", "update_time");
+                        BeanUtils.copyProperties(loginUser, user, BeanUtil.getNullPropertyNames(loginUser));
                         userService.updateById(user);
                     }
                     break;//登录成功

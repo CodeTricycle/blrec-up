@@ -25,14 +25,15 @@ public class RecordingStartedEventListener extends EventListener {
     @Override
     public void execute(JSONObject object) throws Exception {
         Recorde recorde = EventUtil.toRecordeEvent(object);
+        EventUtil.addLock(recorde.getRoomId());
         Live live = liveService.getLiveByRoomId(recorde.getRoomId());
-        if (Objects.isNull(live)){
+        if (Objects.isNull(live)) {
             live = EventUtil.toLiveEvent(object);
             liveService.save(live);//初始化直播间
         }
 
-        Recorde lastRecorde = recordeService.getLastByRoomId(recorde.getRoomId());
-        Date fileCloseTime = null;
+        Recorde lastRecorde = recordeService.getLastRecordeByRoomId(recorde.getRoomId());
+        Date fileCloseTime;
         Date fileOpenTime = new Date();
         if (lastRecorde != null
                 && (fileCloseTime = lastRecorde.getLiveStopTime()) != null
@@ -43,6 +44,7 @@ public class RecordingStartedEventListener extends EventListener {
             return;
         }
 
+        recorde.setSuccess(false);
         recorde.setLiveStartTime(new Date());//设置开播时间
         recordeService.save(recorde);
     }

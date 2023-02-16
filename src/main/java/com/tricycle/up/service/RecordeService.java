@@ -15,9 +15,7 @@ import java.util.List;
  * @description
  */
 public interface RecordeService extends IService<Recorde> {
-    //select * from recorde where room_id = ? order by id desc limit 1
-    Recorde getLastByRoomId(long roomId);
-
+    Recorde getLastRecordeByRoomId(long roomId);
     List<Recorde> getNotReleaseList();
     CommonPage getRecordeList(Integer page, Integer pageSize);
 }

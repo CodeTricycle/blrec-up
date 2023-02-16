@@ -21,21 +21,19 @@ public class HttpUtil {
      * @return
      */
     public static JSONObject execute(HttpRequest request, int retry) {
-        try {
-            HttpResponse response = request.setConnectionTimeout(10 * 1000).execute();
-            if (response.getStatus() == 200) {
-                //请求成功
-                return JSONUtil.parseObj(response.body());
+        for (int i = 0; i < retry; i++) {
+            try {
+                HttpResponse response = request.setConnectionTimeout(10 * 1000).execute();
+                if (response.getStatus() == 200) {
+                    //请求成功
+                    return JSONUtil.parseObj(response.body());
+                }
+                System.out.println(request);
+                System.out.println(response);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            retry--;
-            if (retry > 0) {
-                //请求失败
-                return HttpUtil.execute(request, retry);//重试
-            }
-            return null;//默认值
-        }catch (Exception e){
-            e.printStackTrace();
-            return null;
         }
+        return null;
     }
 }

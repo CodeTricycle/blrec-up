@@ -3,6 +3,7 @@ package com.tricycle.up.task;
 
 import cn.hutool.core.lang.Singleton;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import com.tricycle.up.entity.Live;
 import com.tricycle.up.entity.Recorde;
 import com.tricycle.up.entity.User;
@@ -35,13 +36,13 @@ public class ReleaseTask implements Runnable {
     private UserService userService;
 
     public ReleaseTask(Recorde recorde){
-        this.recorde = recorde;
-        this.videoService = Singleton.get(VideoService.class);
-        this.recordeService = Singleton.get(RecordeService.class);
-        this.liveService = Singleton.get(LiveService.class);
+        this.videoService = SpringUtil.getBean(VideoService.class);
+        this.recordeService = SpringUtil.getBean(RecordeService.class);
+        this.liveService = SpringUtil.getBean(LiveService.class);
+        this.userService = SpringUtil.getBean(UserService.class);
 
+        this.recorde = recorde;
         this.live = liveService.getLiveByRoomId(recorde.getRoomId());
-        this.userService = Singleton.get(UserService.class);
         this.user = userService.getUserByUserId(this.live.getUserId());
     }
 
@@ -51,10 +52,10 @@ public class ReleaseTask implements Runnable {
             //获取视频信息
             List<Video> videoList = this.videoService.getVideoListByRecordeId(this.recorde.getId());
             //获取发布成功的视频信息
-            List<Video> videoSuccessList = this.videoService.getVideoListByRecordeIdAndSuccess(this.recorde.getId());
+            Long videoSuccessCount = this.videoService.getVideoListByRecordeIdAndSuccess(this.recorde.getId());
             if (Objects.isNull(videoList) || videoList.size() == 0)
                 return;
-            if (videoList.size() != videoSuccessList.size()) {
+            if (videoList.size() != videoSuccessCount) {
                 return;
             }
             log.info("{}全部上传完成，等待投稿", this.recorde.getId());
