@@ -9,6 +9,8 @@ import com.tricycle.up.entity.Video;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -21,6 +23,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class EventUtil {
 
     private static Map<Long, Lock> lockMap = new HashMap<>();//用于管理房间录制文件顺序的问题
+    public static BlockingQueue<String> queue = new LinkedBlockingQueue<>();
 
     /**
      * 新建锁，开始录制的时候调用
@@ -93,7 +96,8 @@ public class EventUtil {
         JSONObject data = object.getJSONObject("data");
         JSONObject room = data.getJSONObject("room_info");
         Recorde recorde = JSONUtil.toBean(room, Recorde.class);
-
+        recorde.setLiveStartTime(null);
+        recorde.setLiveStopTime(null);
         return recorde;
     }
 

@@ -1,11 +1,9 @@
 package com.tricycle.up.controller;
 
-import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.StrUtil;
-import com.tricycle.up.event.EventListener;
 import com.tricycle.up.framework.Result;
+import com.tricycle.up.util.EventUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,10 +19,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class WebHookController {
 
     @RequestMapping("/webHook")
-    public Result webHook(@RequestBody(required = false) String json) {
-        if (StrUtil.isNotBlank(json)) {
-            log.info("接收到webHook消息：{}", json);
-            EventListener.execute(json);
+    public Result webHook(@RequestBody(required = false) String json){
+        try {
+            if (StrUtil.isNotBlank(json)) {
+                EventUtil.queue.put(json);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
         }
         return Result.getSucc();
     }

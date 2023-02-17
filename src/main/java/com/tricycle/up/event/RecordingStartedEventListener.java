@@ -25,7 +25,7 @@ public class RecordingStartedEventListener extends EventListener {
     @Override
     public void execute(JSONObject object) throws Exception {
         Recorde recorde = EventUtil.toRecordeEvent(object);
-        EventUtil.addLock(recorde.getRoomId());
+        //EventUtil.addLock(recorde.getRoomId());
         Live live = liveService.getLiveByRoomId(recorde.getRoomId());
         if (Objects.isNull(live)) {
             live = EventUtil.toLiveEvent(object);
@@ -34,7 +34,7 @@ public class RecordingStartedEventListener extends EventListener {
 
         Recorde lastRecorde = recordeService.getLastRecordeByRoomId(recorde.getRoomId());
         Date fileCloseTime;
-        Date fileOpenTime = new Date();
+        Date fileOpenTime = DateUtil.date();
         if (lastRecorde != null
                 && (fileCloseTime = lastRecorde.getLiveStopTime()) != null
                 && !fileOpenTime.after(DateUtil.offsetMinute(fileCloseTime, 10))) {
@@ -45,7 +45,7 @@ public class RecordingStartedEventListener extends EventListener {
         }
 
         recorde.setSuccess(false);
-        recorde.setLiveStartTime(new Date());//设置开播时间
+        recorde.setLiveStartTime(DateUtil.date());//设置开播时间
         recordeService.save(recorde);
     }
 }

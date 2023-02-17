@@ -32,7 +32,7 @@ public class LiveEventListener extends EventListener {
             return;
         }
         //修改直播间信息
-        live.setCover(liveEvent.getCover());
+        //live.setCover(liveEvent.getCover());
         live.setTitle(liveEvent.getTitle());
         liveService.updateById(live);
     }

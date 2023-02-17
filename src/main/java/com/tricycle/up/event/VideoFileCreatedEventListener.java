@@ -1,5 +1,6 @@
 package com.tricycle.up.event;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONObject;
 import com.tricycle.up.entity.Recorde;
@@ -18,7 +19,6 @@ import java.util.Objects;
  * @date 2023/2/13 11:20
  * @description
  */
-@Slf4j
 public class VideoFileCreatedEventListener extends EventListener {
     private RecordeService recordeService = SpringUtil.getBean(RecordeService.class);
     private VideoService videoService = SpringUtil.getBean(VideoService.class);
@@ -26,8 +26,7 @@ public class VideoFileCreatedEventListener extends EventListener {
     @Override
     public void execute(JSONObject object) throws Exception {
         Video video = EventUtil.toVideoEvent(object);
-        EventUtil.lock(video.getRoomId());
-        log.info("文件新建......");
+        //EventUtil.lock(video.getRoomId());
         Video lastVideo = videoService.getLastVideoByRoomId(video.getRoomId());
         Recorde recorde = recordeService.getLastRecordeByRoomId(video.getRoomId());
 
@@ -37,9 +36,9 @@ public class VideoFileCreatedEventListener extends EventListener {
             video.setPIndex(1);
         }
         video.setSuccess(0);
-        video.setFileOpenTime(new Date());
+        video.setFileOpenTime(DateUtil.date());
         video.setRecordeId(recorde.getId());
         videoService.save(video);
-        EventUtil.unlock(video.getRoomId());
+        //EventUtil.unlock(video.getRoomId());
     }
 }

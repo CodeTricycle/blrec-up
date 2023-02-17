@@ -1,5 +1,6 @@
 package com.tricycle.up.event;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONObject;
 import com.tricycle.up.entity.Video;
@@ -18,22 +19,20 @@ import java.util.Objects;
  * @date 2023/2/13 11:20
  * @description
  */
-@Slf4j
 public class VideoFileCompletedEventListener extends EventListener {
     private VideoService videoService = SpringUtil.getBean(VideoService.class);
 
     @Override
     public void execute(JSONObject object) throws Exception {
         Video videoEvent = EventUtil.toVideoEvent(object);
-        EventUtil.lock(videoEvent.getRoomId());
-        log.info("文件完成......");
+        //EventUtil.lock(videoEvent.getRoomId());
         Video video = videoService.getVideoByPath(videoEvent.getPath());
         if (Objects.isNull(video))
             return;
 
         BeanUtils.copyProperties(videoEvent, video, BeanUtil.getNullPropertyNames(videoEvent));
-        video.setFileCloseTime(new Date());
+        video.setFileCloseTime(DateUtil.date());
         videoService.updateById(video);
-        EventUtil.unlock(videoEvent.getRoomId());
+        //EventUtil.unlock(videoEvent.getRoomId());
     }
 }

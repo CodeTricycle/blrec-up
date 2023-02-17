@@ -7,6 +7,7 @@ import cn.hutool.extra.spring.SpringUtil;
 import com.tricycle.up.config.Config;
 import com.tricycle.up.entity.Recorde;
 import com.tricycle.up.entity.Video;
+import com.tricycle.up.event.EventListener;
 import com.tricycle.up.service.RecordeService;
 import com.tricycle.up.service.VideoService;
 import com.tricycle.up.util.BiliUtil;
@@ -47,6 +48,8 @@ public class InitTask {
         this.initTable("recorde");
         this.initTable("user");
         this.initTable("video");
+
+        EventListener.execute();
 
         this.upload();
         this.release();

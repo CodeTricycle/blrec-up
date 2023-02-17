@@ -1,12 +1,16 @@
 package com.tricycle.up.event;
 
 import cn.hutool.core.lang.Singleton;
+import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.tricycle.up.util.EventUtil;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 /**
  * @author tricycle
@@ -14,6 +18,7 @@ import java.util.Map;
  * @date 2023/2/13 11:12
  * @description
  */
+@Slf4j
 public abstract class EventListener implements Listener {
 
     static Map<String, EventListener> listenerMap = new HashMap<>();
@@ -27,22 +32,30 @@ public abstract class EventListener implements Listener {
         listenerMap.put("RecordingStartedEvent", Singleton.get(RecordingStartedEventListener.class));//录制开始
         listenerMap.put("RecordingFinishedEvent", Singleton.get(RecordingFinishedEventListener.class));//录制完成
         listenerMap.put("RecordingCancelledEvent", Singleton.get(RecordingFinishedEventListener.class));//录制取消
+
+
     }
 
-    public static void execute(String event) {
-        try {
-            if (StrUtil.isBlank(event)){
-                return;
-            }
-            JSONObject object = JSONUtil.parseObj(event);
-            String eventType = object.getStr("type");
+    public static void execute() {
+        ThreadUtil.execute(() -> {
+            while (true) {
+                try {
+                    String event = EventUtil.queue.take();
+                    log.info("接收到webHook消息：{}", event);
+                    if (StrUtil.isBlank(event)) {
+                        return;
+                    }
+                    JSONObject object = JSONUtil.parseObj(event);
+                    String eventType = object.getStr("type");
 
-            EventListener listener = listenerMap.get(eventType);
-            if (listener != null) {
-                listener.execute(object);
+                    EventListener listener = listenerMap.get(eventType);
+                    if (listener != null) {
+                        listener.execute(object);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-        }catch (Exception e){
-            e.printStackTrace();
-        }
+        });
     }
 }

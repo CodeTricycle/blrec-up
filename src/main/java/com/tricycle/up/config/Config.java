@@ -14,7 +14,7 @@ import java.io.File;
 @Configuration
 @Slf4j
 public class Config {
-    public static String DB_PATH = "rec" + File.separator + "bili.db";//数据库路径
+    public static String DB_PATH = System.getProperty("user.dir") + File.separator + "rec" + File.separator + "bili.db";//数据库路径
 
     public static String APP_KEY = "4409e2ce8ffd12b8";
     public static String APP_SEC = "59b43e04ad6965f34319062b478f83dd";
